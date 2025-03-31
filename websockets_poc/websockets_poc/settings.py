@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # Needed to be installed to make ASGI configuration work
+    'channels',  # Installed channels for WebSockets
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'websocket_implementation',
 ]
+
+ASGI_APPLICATION = 'websockets_poc.asgi.application'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

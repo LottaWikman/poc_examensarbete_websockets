@@ -7,6 +7,13 @@ def frontend_view(request):
 
 
 def process_with_websocket(request):
+
+    print("Hej")
+
+    print("Ojdå")
+
+    print("Hoppsan")
+
     return JsonResponse(
         {"status": "Success", "code": 200, "message": "A bunch of things happened"}
     )

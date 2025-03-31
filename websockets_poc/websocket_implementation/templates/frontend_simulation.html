@@ -62,24 +62,34 @@
     <ul id="messages"></ul>
 
     <script>
-        let socket = new WebSocket("ws://localhost:8000/ws/progress/");
+        // FRÅN TUTORIALEN PÅ YOUTUBE:
+        let url = `ws://${window.location.host}/ws/socket-server/`
+        
+        const chatSocket = new WebSocket(url)
+
+        chatSocket.onmessage = function(e){
+            let data = JSON.parse(e.data)
+            console.log('Data:', data)
+        }
+
+        // FRÅN CHATGPT:
+        // let socket = new WebSocket("ws://localhost:8000/ws/progress/");
 
         
-        //Skapar en WebSocket-tunnel mellan klient och server
-        socket.onmessage = function(event) {
-            let messages = document.getElementById("messages");
-            let message = document.createElement("li");
-            message.textContent = event.data;
-            messages.appendChild(message);
-        };
+        // //Skapar en WebSocket-tunnel mellan klient och server
+        // socket.onmessage = function(event) {
+        //     let messages = document.getElementById("messages");
+        //     let message = document.createElement("li");
+        //     message.textContent = event.data;
+        //     messages.appendChild(message);
+        // };
         
-        // Funktion för att 
-        function startProcessWithWebSocket() {
-            fetch("process-with-websocket/")
-                .then(response => response.json())
-                .then(data => console.log(data.status))
-                .catch(error => console.error("Error:", error));
-        }
+        // function startProcessWithWebSocket() {
+        //     fetch("process-with-websocket/")
+        //         .then(response => response.json())
+        //         .then(data => console.log(data.status))
+        //         .catch(error => console.error("Error:", error));
+        // }
 
         // Funktion för att starta process 
         function startProcessWithHttp() {
@@ -89,7 +99,7 @@
                     // Visa statusen direkt i UI för "utan WebSocket"
                     let messages = document.getElementById("messages");
                     let message = document.createElement("li");
-                    message.textContent = data.status;
+                    message.textContent = JSON.stringify(data, null, 2);
                     messages.appendChild(message);
                 })
                 .catch(error => console.error("Error:", error));
