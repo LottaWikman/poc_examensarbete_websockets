@@ -56,43 +56,42 @@
 </head>
 <body>
     <h1>WebSocket PoC</h1>
-    <button onclick="startProcess()">Starta Process</button>
+    <button onclick="startProcessWithWebSocket()">Starta Process med WebSocket</button>
+    
+    <button onclick="startProcessWithHttp()">Starta Process med HTTP</button>
     <ul id="messages"></ul>
 
     <script>
         let socket = new WebSocket("ws://localhost:8000/ws/progress/");
 
+        
+        //Skapar en WebSocket-tunnel mellan klient och server
         socket.onmessage = function(event) {
             let messages = document.getElementById("messages");
             let message = document.createElement("li");
             message.textContent = event.data;
             messages.appendChild(message);
         };
-
-        function startProcess() {
-            fetch("/start-process/")
+        
+        // Funktion för att 
+        function startProcessWithWebSocket() {
+            fetch("process-with-websocket/")
                 .then(response => response.json())
                 .then(data => console.log(data.status))
                 .catch(error => console.error("Error:", error));
         }
-    </script>
-    <button onclick="startProcessWithoutWebsocket()">Starta Process (utan websocket)</button>
-    <ul id="messages"></ul>
 
-    <script>
-        let socket = new WebSocket("ws://localhost:8000/ws/progress/");
-
-        socket.onmessage = function(event) {
-            let messages = document.getElementById("messages");
-            let message = document.createElement("li");
-            message.textContent = event.data;
-            messages.appendChild(message);
-        };
-
-        function startProcess() {
-            fetch("/start-process/")
+        // Funktion för att starta process 
+        function startProcessWithHttp() {
+            fetch("process-with-http/")
                 .then(response => response.json())
-                .then(data => console.log(data.status))
+                .then(data => {
+                    // Visa statusen direkt i UI för "utan WebSocket"
+                    let messages = document.getElementById("messages");
+                    let message = document.createElement("li");
+                    message.textContent = data.status;
+                    messages.appendChild(message);
+                })
                 .catch(error => console.error("Error:", error));
         }
     </script>
