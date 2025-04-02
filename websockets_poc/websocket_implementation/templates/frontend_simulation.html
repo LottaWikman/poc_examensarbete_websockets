@@ -1,109 +1,152 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Test</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #e3e3e3;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #e3e3e3;
+    }
 
-        h1 {
-            font-size: 34px;
-            color: #7a7b7a;
-        }
+    h1 {
+      font-size: 34px;
+      color: #7a7b7a;
+    }
 
-        button {
-            font-size: 26px;
-            padding: 10px 20px;
-            margin-top: 20px;
-            border: none;
-            background-color: #797b7c;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
+    /* Container som håller knapparna och deras respektive listor */
+    .container {
+      display: flex;
+      gap: 20px;
+    }
 
-        button:hover {
-            background-color: #abadac;
-        }
+    .process-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin-top: 20px;
-            width: 300px;
-            text-align: left;
-        }
+    button {
+      font-size: 26px;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      border: none;
+      background-color: #797b7c;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
 
-        li {
-            background: white;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    button:hover {
+      background-color: #abadac;
+    }
+
+    ul {
+      list-style: disc;  /* Bullet points */
+      padding: 0 20px;
+      margin: 0;
+      width: 300px;
+      text-align: left;
+    }
+
+    li {
+      background: white;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+  </style>
 </head>
 <body>
-    <h1>WebSocket PoC</h1>
-    <button onclick="startProcessWithWebSocket()">Starta Process med WebSocket</button>
-    
-    <button onclick="startProcessWithHttp()">Starta Process med HTTP</button>
-    <ul id="messages"></ul>
+  <h1>WebSocket PoC</h1>
+  <div class="container">
+    <div class="process-container">
+      <button onclick="startProcessWithWebSocket()">Starta Process med WebSocket</button>
+      <ul id="wsMessages"></ul>
+    </div>
+    <div class="process-container">
+      <button onclick="startProcessWithHttp()">Starta Process med HTTP</button>
+      <ul id="httpMessages"></ul>
+    </div>
+  </div>
 
-    <script>
-        // FRÅN TUTORIALEN PÅ YOUTUBE:
-        let url = `ws://${window.location.host}/ws/socket-server/`
-        
-        const chatSocket = new WebSocket(url)
+  <script>
+    // Skapa en WebSocket-anslutning till servern
+    let url = `ws://${window.location.host}/ws/socket-server/`;
+    const chatSocket = new WebSocket(url);
 
-        chatSocket.onmessage = function(e){
-            let data = JSON.parse(e.data)
-            console.log('Data:', data)
-        }
+    // Funktion för att lägga till meddelanden i en specifik lista
+    function addMessage(message, listId) {
+      let messages = document.getElementById(listId);
+      let messageItem = document.createElement("li");
+      messageItem.textContent = message;
+      messages.appendChild(messageItem);
+    }
 
-        // FRÅN CHATGPT:
-        // let socket = new WebSocket("ws://localhost:8000/ws/progress/");
+    // Hantera inkommande meddelanden från WebSocket
+    chatSocket.onmessage = function(e) {
+      let data = JSON.parse(e.data);
+      console.log('Data:', data);
+      
+      if (data.type === "progress_update") {
+        addMessage(data.message, "wsMessages");
+      } else if (data.type === "connection_established") {
+        console.log(data.message);
+      }
+    };
 
-        
-        // //Skapar en WebSocket-tunnel mellan klient och server
-        // socket.onmessage = function(event) {
-        //     let messages = document.getElementById("messages");
-        //     let message = document.createElement("li");
-        //     message.textContent = event.data;
-        //     messages.appendChild(message);
-        // };
-        
-        // function startProcessWithWebSocket() {
-        //     fetch("process-with-websocket/")
-        //         .then(response => response.json())
-        //         .then(data => console.log(data.status))
-        //         .catch(error => console.error("Error:", error));
-        // }
+    // Hantera WebSocket-anslutningsfel
+    chatSocket.onerror = function(error) {
+      console.error('WebSocket Error:', error);
+      addMessage("WebSocket Error: Connection failed", "wsMessages");
+    };
 
-        // Funktion för att starta process 
-        function startProcessWithHttp() {
-            fetch("process-with-http/")
-                .then(response => response.json())
-                .then(data => {
-                    // Visa statusen direkt i UI för "utan WebSocket"
-                    let messages = document.getElementById("messages");
-                    let message = document.createElement("li");
-                    message.textContent = JSON.stringify(data, null, 2);
-                    messages.appendChild(message);
-                })
-                .catch(error => console.error("Error:", error));
-        }
-    </script>
+    // Hantera när WebSocket-anslutningen stängs
+    chatSocket.onclose = function(e) {
+      console.log('WebSocket Connection closed');
+    };
+
+    // Funktion för att starta processen med WebSocket
+    function startProcessWithWebSocket() {
+      document.getElementById("wsMessages").innerHTML = '';
+      addMessage("Starting process with WebSocket...", "wsMessages");
+
+      fetch("process-with-websocket/")
+        .then(response => response.json())
+        .then(data => {
+          console.log(data.status);
+          addMessage("Process completed: " + data.message, "wsMessages");
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          addMessage("Error: " + error, "wsMessages");
+        });
+    }
+
+    // Funktion för att starta processen med HTTP
+    function startProcessWithHttp() {
+      document.getElementById("httpMessages").innerHTML = '';
+      addMessage("Starting process with HTTP...", "httpMessages");
+
+      fetch("process-with-http/")
+        .then(response => response.json())
+        .then(data => {
+          addMessage("Process completed: " + data.message, "httpMessages");
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          addMessage("Error: " + error, "httpMessages");
+        });
+    }
+  </script>
 </body>
 </html>
