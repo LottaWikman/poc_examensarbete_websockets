@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 import time
-from .consumers import broadcast_progress
+from .consumers import broadcast_progress, active_connections
 
 
 def frontend_view(request):
@@ -10,22 +10,32 @@ def frontend_view(request):
 
 def process_with_websocket(request):
 
+    # Get connection_id from frontend
+    connection_id = request.GET.get("connection_id")
+
+    if not connection_id or connection_id not in active_connections:
+        return JsonResponse(
+            {"status": "Error", "message": "Invalid WebSocket connection"}, status=400
+        )
+
     # Simulate response time from microservice
     time.sleep(1)
 
-    broadcast_progress("1. Initiating process")
+    # Add connection_id to each broadcast_progress-call because we only
+    # want to broadcast to this specific connection_id!
+    broadcast_progress("1. Initiating process", connection_id)
 
     time.sleep(1)
 
-    broadcast_progress("2. In the beginning of the process")
+    broadcast_progress("2. In the beginning of the process", connection_id)
 
     time.sleep(1)
 
-    broadcast_progress("3. Now we're getting somewhere")
+    broadcast_progress("3. Now we're getting somewhere", connection_id)
 
     time.sleep(1)
 
-    broadcast_progress("4. Almost done...")
+    broadcast_progress("4. Almost done...", connection_id)
 
     time.sleep(1)
 

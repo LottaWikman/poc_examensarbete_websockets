@@ -7,9 +7,10 @@ active_connections = {}
 
 
 # Broadcast the progress to all active connections of the WebSocket
-def broadcast_progress(message):
-    for connection in active_connections.values():
-        connection.send(
+# Adding connection_id to make the broadcasting individual
+def broadcast_progress(message, connection_id):
+    if connection_id in active_connections:
+        active_connections[connection_id].send(
             text_data=json.dumps(
                 {
                     "type": "progress_update",
@@ -37,6 +38,7 @@ class Consumer(WebsocketConsumer):
                 {
                     "type": "connection_established",
                     "message": "You are now connected to the server via WebSocket!",
+                    "connection_id": self.connection_id,
                 }
             )
         )

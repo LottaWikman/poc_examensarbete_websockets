@@ -70,21 +70,24 @@
   <h1>WebSocket PoC</h1>
   <div class="container">
     <div class="process-container">
-      <button onclick="startProcessWithWebSocket()">Starta Process med WebSocket</button>
+      <button onclick="startProcessWithWebSocket()">Start Process with WebSocket</button>
       <ul id="wsMessages"></ul>
     </div>
     <div class="process-container">
-      <button onclick="startProcessWithHttp()">Starta Process med HTTP</button>
+      <button onclick="startProcessWithHttp()">Start Process with HTTP</button>
       <ul id="httpMessages"></ul>
     </div>
   </div>
 
   <script>
-    // Skapa en WebSocket-anslutning till servern
-    let url = `ws://${window.location.host}/ws/socket-server/`;
-    const chatSocket = new WebSocket(url);
+    // Create a variable to store the connection ID
+    let currentConnectionId = null;
 
-    // Funktion för att lägga till meddelanden i en specifik lista
+    // Create a WebSocket connection to the server
+    let url = `ws://${window.location.host}/ws/socket-server/`;
+    const processSocket = new WebSocket(url);
+
+    // Function to add messages to a specific list
     function addMessage(message, listId) {
       let messages = document.getElementById(listId);
       let messageItem = document.createElement("li");
@@ -92,8 +95,8 @@
       messages.appendChild(messageItem);
     }
 
-    // Hantera inkommande meddelanden från WebSocket
-    chatSocket.onmessage = function(e) {
+    // Handle incoming messages from WebSocket
+    processSocket.onmessage = function(e) {
       let data = JSON.parse(e.data);
       console.log('Data:', data);
       
@@ -101,26 +104,36 @@
         addMessage(data.message, "wsMessages");
       } else if (data.type === "connection_established") {
         console.log(data.message);
+
+        // Save the connection ID to the current WebSocket-connection
+        currentConnectionId = data.connection_id
+        console.log("Connection ID received:", currentConnectionId)
       }
     };
 
-    // Hantera WebSocket-anslutningsfel
-    chatSocket.onerror = function(error) {
+    // Handle WebSocket connection errors
+    processSocket.onerror = function(error) {
       console.error('WebSocket Error:', error);
       addMessage("WebSocket Error: Connection failed", "wsMessages");
     };
 
-    // Hantera när WebSocket-anslutningen stängs
-    chatSocket.onclose = function(e) {
+    // Handle WebSocket connection closing
+    processSocket.onclose = function(e) {
       console.log('WebSocket Connection closed');
     };
 
-    // Funktion för att starta processen med WebSocket
+    // Function to start the process with WebSocket
     function startProcessWithWebSocket() {
       document.getElementById("wsMessages").innerHTML = '';
       addMessage("Starting process with WebSocket...", "wsMessages");
 
-      fetch("process-with-websocket/")
+      // Chekc if the current connection ID is available
+      if (!currentConnectionId) {
+        addMessage(" Error: No WebSocket connection established", "wsMessages");
+        return;
+      }
+
+      fetch(`process-with-websocket/?connection_id=${currentConnectionId}`)
         .then(response => response.json())
         .then(data => {
           console.log(data.status);
@@ -132,7 +145,7 @@
         });
     }
 
-    // Funktion för att starta processen med HTTP
+    // Function to start the process with HTTP
     function startProcessWithHttp() {
       document.getElementById("httpMessages").innerHTML = '';
       addMessage("Starting process with HTTP...", "httpMessages");
