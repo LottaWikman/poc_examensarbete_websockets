@@ -18,24 +18,22 @@ def process_with_websocket(request):
             {"status": "Error", "message": "Invalid WebSocket connection"}, status=400
         )
 
+    # Add connection_id to each broadcast_progress-call because we only
+    # want to broadcast to this specific connection_id!
+    broadcast_progress("0 % Initiating process", connection_id)
+
     # Simulate response time from microservice
     time.sleep(1)
 
-    # Add connection_id to each broadcast_progress-call because we only
-    # want to broadcast to this specific connection_id!
-    broadcast_progress("1. Initiating process", connection_id)
+    broadcast_progress("25 % Working through the process.", connection_id)
 
     time.sleep(1)
 
-    broadcast_progress("2. In the beginning of the process", connection_id)
+    broadcast_progress("50 % Halfway done.", connection_id)
 
     time.sleep(1)
 
-    broadcast_progress("3. Now we're getting somewhere", connection_id)
-
-    time.sleep(1)
-
-    broadcast_progress("4. Almost done...", connection_id)
+    broadcast_progress("75 % Going through the last steps...", connection_id)
 
     time.sleep(1)
 
@@ -43,7 +41,7 @@ def process_with_websocket(request):
         {
             "status": "Success",
             "code": 200,
-            "message": "Done!",
+            "message": "100 % Process completed.",
         }
     )
 
@@ -52,24 +50,24 @@ def process_with_http(request):
 
     messages_to_frontend = []
 
-    messages_to_frontend.append("1. Initiating process")
+    messages_to_frontend.append("0 % Initiating process")
 
     # Simulate response time from microservice
     time.sleep(1)
 
-    messages_to_frontend.append("2. In the beginning of the process")
+    messages_to_frontend.append("25 % Working through the process.")
 
     time.sleep(1)
 
-    messages_to_frontend.append("3. Now we're getting somewhere")
+    messages_to_frontend.append("50 % Halfway done.")
 
     time.sleep(1)
 
-    messages_to_frontend.append("4. Almost done...")
+    messages_to_frontend.append("75 % Going through the last steps...")
 
     time.sleep(1)
 
-    print(f"message_to_frontend : {messages_to_frontend}")
+    messages_to_frontend.append("100 % Process completed.")
 
     return JsonResponse(
         {

@@ -50,8 +50,8 @@
     }
 
     ul {
-      list-style: disc;  /* Bullet points */
-      padding: 0 20px;
+      list-style: none;  /* Removed bullet points */
+      padding: 0;
       margin: 0;
       width: 300px;
       text-align: left;
@@ -91,7 +91,9 @@
     function addMessage(message, listId) {
       let messages = document.getElementById(listId);
       let messageItem = document.createElement("li");
-      messageItem.textContent = message;
+      
+      // Replace newline characters with <br> for proper line breaks
+      messageItem.innerHTML = message.replace(/\n/g, '<br>');
       messages.appendChild(messageItem);
     }
 
@@ -125,9 +127,9 @@
     // Function to start the process with WebSocket
     function startProcessWithWebSocket() {
       document.getElementById("wsMessages").innerHTML = '';
-      addMessage("Starting process with WebSocket...", "wsMessages");
+      // addMessage("Starting process with WebSocket...", "wsMessages");
 
-      // Chekc if the current connection ID is available
+      // Check if the current connection ID is available
       if (!currentConnectionId) {
         addMessage(" Error: No WebSocket connection established", "wsMessages");
         return;
@@ -137,7 +139,7 @@
         .then(response => response.json())
         .then(data => {
           console.log(data.status);
-          addMessage("Process completed: " + data.message, "wsMessages");
+          addMessage(data.message, "wsMessages");
         })
         .catch(error => {
           console.error("Error:", error);
@@ -148,12 +150,14 @@
     // Function to start the process with HTTP
     function startProcessWithHttp() {
       document.getElementById("httpMessages").innerHTML = '';
-      addMessage("Starting process with HTTP...", "httpMessages");
+      // addMessage("Starting process with HTTP...", "httpMessages");
 
       fetch("process-with-http/")
         .then(response => response.json())
         .then(data => {
-          addMessage("Process completed: " + data.message, "httpMessages");
+          // Format the message with line breaks
+          const formattedMessage = data.message.join('\n');
+          addMessage("Process completed:\n" + formattedMessage, "httpMessages");
         })
         .catch(error => {
           console.error("Error:", error);
