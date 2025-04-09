@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket File Upload Test (TypeScript)</title>
+</head>
+<body>
+
+    <h2>Test WebSocket File Upload</h2>
+    <input type="file" id="fileInput">
+    <button id="uploadButton">Upload File</button>
+
+    <h3>Server Response:</h3>
+    <pre id="serverResponse"></pre>
+
+    <script src="{% static 'typescript/upload_test.js' %}"></script>  <!-- Kompilerad TypeScript-fil -->
+</body>
+</html>

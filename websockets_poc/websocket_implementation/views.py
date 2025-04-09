@@ -76,3 +76,7 @@ def process_with_http(request):
             "message": messages_to_frontend,
         }
     )
+
+
+def upload_test_view(request):
+    return render(request, "upload_test.html")
