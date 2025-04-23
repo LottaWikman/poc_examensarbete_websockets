@@ -1,2 +1,7 @@
 # venvs
 venv/
+
+# pyc-mappar och filer
+__pycache__/
+*.pyc
+
