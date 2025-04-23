@@ -1,6 +1,8 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, HttpResponseNotFound
 import time
+import os
+
 from .consumers import broadcast_progress, active_connections
 
 
@@ -80,3 +82,13 @@ def process_with_http(request):
 
 def upload_test_view(request):
     return render(request, "upload_test.html")
+
+
+def serve_uploaded_file(request, filename):
+    """Serve an uploaded file by its filename"""
+    filepath = os.path.join("uploaded_files", filename)
+
+    if os.path.exists(filepath):
+        return FileResponse(open(filepath, 'rb'))
+    else:
+        return HttpResponseNotFound("File not found")

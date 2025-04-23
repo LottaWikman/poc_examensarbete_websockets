@@ -15,5 +15,7 @@ urlpatterns = [
         name="start-process-with-http",
     ),
     # Paths for the upload-files-test-thing:
-    path("upload-test", views.upload_test_view, name="upload-test-view"),
+    path("upload-test/", views.upload_test_view, name="upload-test-view"),
+    # Path to show the uploaded files
+    path("uploads/<str:filename>", views.serve_uploaded_file, name="serve-file"),
 ]

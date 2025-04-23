@@ -48,46 +48,84 @@ class Consumer(WebsocketConsumer):
             )
         )
 
-    def receive(self, text_data):
+    def receive(self, text_data=None, bytes_data=None):
         """Handling messages from WebSocket"""
 
-        data = json.loads(text_data)
-        print(f"Received message: {data}")
+        print("Inuti receive-metoden!")
 
-    def receive_bytes(self, bytes_data):
-        """Handling incoming files through WebSocket"""
+        if text_data:
+            data = json.loads(text_data)
 
-        file_name = f"{uuid.uuid4()}.bin"
-        file_path = os.path.join(UPLOAD_DIRECTORY, file_name)
-
-        # "w" stands for "write mode" and means that the file is opened up for writing
-        # "b" stands for "binary mode" and means that you can handle binary files (= non-textbased files)
-        with open(file_path, "wb") as f:
-            f.write(bytes_data)
-
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "file_upload_success",
-                    "message": f"File uploaded successfully as {file_name}",
-                    "file_path": file_path,
+            if data.get("type") == "file_info":
+                self.pending_file_info = {
+                    "filename": data.get("filename", "unknown"),
+                    "size": data.get("size", 0),
+                    "content_type": data.get("contentType", "application/octet-stream"),
                 }
-            )
-        )
 
-    def send_progress(self, event):
-        """Handle messages that are sent to the consumer"""
+        elif bytes_data:
 
-        message = event["message"]
+            print("Du ska skicka binärdata!")
 
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "progress_update",
-                    "message": message,
-                }
-            )
-        )
+            try:
+                # hasattr means "has attribute" and is a check to see if something has a specific attribute,
+                # in this case "pending_file_info"
+                if hasattr(self, "pending_file_info"):
+
+                    print("Hittade metadata.")
+
+                    filename = self.pending_file_info.get("filename", "unknown")
+
+                    print(f"filename: {filename}")
+
+                    file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+
+                    # "w" stands for "write mode" and means that the file is opened up for writing
+                    # "b" stands for "binary mode" and means that you can handle binary files (= non-textbased files)
+                    with open(file_path, "wb") as f:
+                        f.write(bytes_data)
+
+                    # Send confirmation to the client
+                    self.send(
+                        text_data=json.dumps(
+                            {
+                                "type": "file_upload_success",
+                                "message": f"Successfully uploaded {filename}",
+                                "file_path": file_path,
+                                "filename": filename,
+                            }
+                        )
+                    )
+
+                    # Remove the already used data
+                    del self.pending_file_info
+
+                else:
+
+                    print("Hittade ingen metadata, genererar ett nytt filnamn.")
+
+                    filename = f"{uuid.uuid1()}.bin"
+                    file_path = os.path.join(UPLOAD_DIRECTORY, filename)
+
+                    # "w" stands for "write mode" and means that the file is opened up for writing
+                    # "b" stands for "binary mode" and means that you can handle binary files (= non-textbased files)
+                    with open(file_path, "wb") as f:
+                        f.write(bytes_data)
+
+                    # Send confirmation to the client
+                    self.send(
+                        text_data=json.dumps(
+                            {
+                                "type": "file_upload_success",
+                                "message": f"Successfully uploaded {filename}",
+                                "file_path": file_path,
+                                "filename": filename,
+                            }
+                        )
+                    )
+
+            except Exception as e:
+                print(f"Error: {e}")
 
     def disconnect(self, close_code):
         """Remove this connection from the list active_connections"""

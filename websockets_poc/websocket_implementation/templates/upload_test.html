@@ -1,19 +1,510 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket File Upload Test (TypeScript)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #e3e3e3;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 34px;
+      color: #7a7b7a;
+      margin-top: 60px;
+    }
+
+    .app-container {
+      display: flex;
+      width: 100%;
+      max-width: 1200px;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .file-gallery {
+      flex: 1;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      max-width: 300px;
+      overflow-y: auto;
+      max-height: 70vh;
+    }
+
+    .gallery-title {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 8px;
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .file-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+    }
+
+    .file-thumbnail {
+      width: 40px;
+      height: 40px;
+      margin-right: 10px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f0f0f0;
+      border-radius: 3px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #777;
+      flex-shrink: 0;
+    }
+
+    .file-icon[data-ext="pdf"] {
+      background-color: #ffebee;
+      color: #f44336;
+    }
+
+    .file-icon[data-ext="doc"], .file-icon[data-ext="docx"] {
+      background-color: #e3f2fd;
+      color: #2196f3;
+    }
+
+    .file-icon[data-ext="xls"], .file-icon[data-ext="xlsx"] {
+      background-color: #e8f5e9;
+      color: #4caf50;
+    }
+
+    .file-info {
+      flex: 1;
+      min-width: 0; /* Förhindrar överskridande av gränser */
+    }
+
+    .file-name {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 3px;
+      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-meta {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .upload-section {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .process-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    button {
+      font-size: 26px;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      border: none;
+      background-color: #797b7c;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #abadac;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      max-width: 500px;
+      text-align: left;
+    }
+
+    li {
+      background: white;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .corner-button {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      padding: 10px 20px;
+      background-color: #797b7c;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* För tomt galleri */
+    .empty-gallery {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+      padding: 20px 0;
+    }
+    
+    /* Förhandsgranskningsmodal */
+    .preview-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .preview-content {
+      max-width: 80%;
+      max-height: 80%;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      position: relative;
+    }
+    
+    .preview-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #333;
+    }
+    
+    .preview-image {
+      max-width: 100%;
+      max-height: 70vh;
+    }
+    
+    .preview-filename {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
+    <div>
+        <button onclick="window.location.href='/';" class="corner-button"> << Go back to the home page</button>
+    </div>
+    <div id="random"></div>
+    <h1>Send files through WebSocket PoC</h1>
+    
+    <div class="app-container">
+        <!-- Vänster sida: Filgalleri -->
+        <div class="file-gallery" id="fileGallery">
+            <div class="gallery-title">Uploaded files</div>
+            <div class="empty-gallery" id="emptyGallery">No files right now</div>
+            <div id="fileList"></div>
+        </div>
+        
+        <!-- Höger sida: Uppladdningssektion -->
+        <div class="upload-section">
+            <div class="container">
+                <button onclick="uploadFile()">Upload file</button>
+                <ul id="uploadMessages"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Förhandsgranskningsmodal för bilder -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-content">
+            <span class="preview-close" onclick="closePreview()">&times;</span>
+            <img class="preview-image" id="previewImage" src="" alt="Preview">
+            <div class="preview-filename" id="previewFilename"></div>
+        </div>
+    </div>
 
-    <h2>Test WebSocket File Upload</h2>
-    <input type="file" id="fileInput">
-    <button id="uploadButton">Upload File</button>
+  <script>
 
-    <h3>Server Response:</h3>
-    <pre id="serverResponse"></pre>
+    // Create a WebSocket connection to the server
+    let url = `ws://${window.location.host}/ws/socket-server/`;
+    const processSocket = new WebSocket(url);
 
-    <script src="{% static 'typescript/upload_test.js' %}"></script>  <!-- Kompilerad TypeScript-fil -->
+    // Initialize the currentConnectionId as null
+    let connectionId = null;
+    
+    // Spara uppladdade filer i en array för att kunna visa dem
+    let uploadedFiles = [];
+
+    // Handle incoming messages from WebSocket
+    processSocket.onmessage = function(e) {
+        let data = JSON.parse(e.data);
+        console.log('Data:', data);
+        
+        if (data.type === "progress_update") {
+            addUploadMessage(data.message);
+        } else if (data.type === "connection_established") {
+            // Save the connection ID to the current WebSocket-connection
+            connectionId = data.connection_id;
+            console.log("Connection ID received:", connectionId);
+        } else if (data.type === "file_upload_success") {
+            addUploadMessage(`Yes! ${data.message}`);
+            
+            // Skapa en URL för filåtkomst
+            const fileUrl = `/uploads/${data.filename}`;
+            
+            // Lägg till information om den uppladdade filen till arrayen
+            const fileInfo = {
+                name: data.filename || 'unknown',
+                filename: data.filename || '',
+                url: fileUrl,
+                uploadDate: new Date().toLocaleString(),
+                size: data.size_formatted || '',
+                contentType: data.filename ? getMimeType(data.filename) : 'application/octet-stream'
+            };
+            
+            console.log("Added file to gallery:", fileInfo);
+            
+            // Lägg till filen i vår array
+            uploadedFiles.push(fileInfo);
+            
+            // Uppdatera vyn
+            updateFileGallery();
+        } else if (data.type === "file_upload_error") {
+            addUploadMessage(`Oh no! ${data.message}`);
+        }
+    };
+
+    // Method for adding the messages that will appear when you upload a file
+    function addUploadMessage(message) {
+        const ul = document.getElementById("uploadMessages");
+        const li = document.createElement("li");
+        li.textContent = message;
+        ul.appendChild(li);
+    }
+    
+    // Funktion för att uppdatera filgalleriet
+    function updateFileGallery() {
+        const fileList = document.getElementById("fileList");
+        const emptyGallery = document.getElementById("emptyGallery");
+        
+        // Visa/dölj meddelande om tomt galleri
+        if (uploadedFiles.length > 0) {
+            emptyGallery.style.display = "none";
+        } else {
+            emptyGallery.style.display = "block";
+            return;
+        }
+        
+        // Rensa befintlig lista
+        fileList.innerHTML = "";
+        
+        // Lägg till varje fil i galleriet
+        uploadedFiles.forEach((file, index) => {
+            const fileItem = document.createElement("div");
+            fileItem.className = "file-item";
+            
+            // Skapa lämplig representation beroende på filtyp
+            let fileVisual;
+            const fileExtension = getFileExtension(file.name).toLowerCase();
+            
+            if (isImageFile(fileExtension)) {
+                // För bilder, skapa en faktisk miniatyr
+                fileVisual = document.createElement("div");
+                fileVisual.className = "file-thumbnail";
+                fileVisual.style.backgroundImage = `url('${file.url}')`;
+            } else {
+                // För andra filtyper, visa filtyps-ikon
+                fileVisual = document.createElement("div");
+                fileVisual.className = "file-icon";
+                fileVisual.setAttribute('data-ext', fileExtension);
+                fileVisual.textContent = fileExtension.toUpperCase() || "?";
+            }
+            
+            // Filinformation
+            const fileInfo = document.createElement("div");
+            fileInfo.className = "file-info";
+            
+            const fileName = document.createElement("div");
+            fileName.className = "file-name";
+            fileName.textContent = file.name;
+            fileName.title = file.name; // För att visa hela filnamnet vid hover
+            
+            const fileMeta = document.createElement("div");
+            fileMeta.className = "file-meta";
+            fileMeta.textContent = `${file.size} • ${file.uploadDate}`;
+            
+            // Sätt ihop allt
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileMeta);
+            
+            fileItem.appendChild(fileVisual);
+            fileItem.appendChild(fileInfo);
+            
+            // Klickhändelse för att visa filen
+            fileItem.addEventListener("click", function() {
+                if (isImageFile(fileExtension)) {
+                    // Visa förhandsgranskning för bilder
+                    showImagePreview(file);
+                } else {
+                    // Öppna filen i en ny flik för andra filtyper
+                    window.open(file.url, '_blank');
+                }
+            });
+            
+            fileList.appendChild(fileItem);
+        });
+    }
+    
+    // Visa bildförhandsgranskning
+    function showImagePreview(file) {
+        const modal = document.getElementById('previewModal');
+        const image = document.getElementById('previewImage');
+        const filename = document.getElementById('previewFilename');
+        
+        image.src = file.url;
+        filename.textContent = file.name;
+        modal.style.display = 'flex';
+    }
+    
+    // Stäng bildförhandsgranskning
+    function closePreview() {
+        document.getElementById('previewModal').style.display = 'none';
+    }
+    
+    // Hjälpfunktion för att få filändelse
+    function getFileExtension(filename) {
+        return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2) || "";
+    }
+    
+    // Hjälpfunktion för att identifiera bildfiler
+    function isImageFile(extension) {
+        const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp", "svg"];
+        return imageExtensions.includes(extension);
+    }
+    
+    // Hjälpfunktion för att gissa MIME-typ baserat på filnamn
+    function getMimeType(filename) {
+        const ext = getFileExtension(filename).toLowerCase();
+        const mimeTypes = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'txt': 'text/plain'
+        };
+        
+        return mimeTypes[ext] || 'application/octet-stream';
+    }
+
+    function uploadFile() {
+        // Create a "hidden" input field
+        const input = document.createElement("input");
+        input.type = "file";
+
+        // When the user has chosen a file
+        input.onchange = () => {
+            const file = input.files[0];
+            if (!file) return;
+            
+            // Send message to frontend
+            addUploadMessage(`Chosen file: ${file.name} - ${file.size} bytes. Uploading...`)
+            
+            // If WebSocket connection is open, upload the file
+            if (processSocket.readyState === WebSocket.OPEN) {
+              // Send the metadata as JSON first
+              processSocket.send(JSON.stringify({
+                type: "file_info",
+                filename: file.name,
+                size: file.size,
+                contentType: file.type
+              }));
+
+              // Initialize a reader and send the file contents
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                processSocket.send(e.target.result);
+              };
+
+              // Read the file as a binary object
+              reader.readAsArrayBuffer(file);
+            } else {
+                addUploadMessage("WebSocket is not connected. Cannot upload file. Sorry :(");
+            }
+        };
+
+        // Click on the input to open the file chooser
+        input.click();
+    }
+    
+    // Stäng förhandsgranskningsmodalen om man klickar utanför innehållet
+    window.onclick = function(event) {
+        const modal = document.getElementById('previewModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+  </script>
 </body>
 </html>
